@@ -1,0 +1,70 @@
+---
+title: "BayesianTTest Tutorial"
+author: "Roy Michael Moore"
+date: "2023-06-02"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{BayesianTTest Tutorial}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+A tutorial for the R package and Shiny Dashboard BayesianTTest.
+
+## Contents
+
+1. Shiny Dashboard tutorial with screenshots.
+
+1. BayesianTTest functions Tutorial.
+
+
+## Shiny Dashboard Tutorial
+
+The shiny dashboard allows the user to perform Bayesian t-tests after they have uploaded a CSV. file of the data. It is not finished yet hence there are no screenshots yet. 
+
+Using the t-test dashboard is really simple, users simply have to upload their data file with one variable in each column. First, they have to select the variable(s) that they want to be part of the design. Then, they will select their desired analyses (e.g., one-sample) and the type of hypothesis (e.g., two tailed). Afterwards, they can specify the prior scale and whether they want a Bayesian robustness check performed.
+
+
+
+## BayesianTTest Functions Tutorial
+
+So far, the BayesianTTest package only contains one function: robustness_check().
+
+
+### robustness_check()
+
+This function computes the Bayes Factor for the desired test while modifying the prior scale values and returns a plot. It takes the following arguments:
+
+1. "x" a vector of observations for the first (or only) group
+
+1. "y" a vector of observations for the second group (or condition, for paired)
+
+1. "mu" used to specify test value for one-sample designs
+
+1. "nullInterval" optional vector of length 2 containing lower and upper bounds of an interval hypothesis to test
+
+1. "paired" if TRUE, observations are paired
+
+1. "max_r" maximum value of the scale parameter of the Cauchy prior to be plotted
+
+1. "iterations" will determine how precise the plot will be
+
+Here is an example of the function in action:
+
+```{r}
+library(BayesianTTest)
+
+robustness_check(x = sleep[1:10, 1],
+                 y = sleep[11:20, 1],
+                 paired = TRUE)
+```
+
+If you want to store this plot for later your, you can simple use the function recordPlot().
+
