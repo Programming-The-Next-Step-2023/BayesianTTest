@@ -4,12 +4,24 @@
 \alias{robustness_check}
 \title{Bayes Factor Robustness Check}
 \usage{
-robustness_check(x, y, paired = FALSE, max_r = 2, iterations = 200)
+robustness_check(
+  x,
+  y,
+  mu = 0,
+  nullInterval = NULL,
+  paired = FALSE,
+  max_r = 2,
+  iterations = 200
+)
 }
 \arguments{
 \item{x}{a vector of observations for the first (or only) group}
 
 \item{y}{a vector of observations for the second group (or condition, for paired)}
+
+\item{mu}{used to specify test value for one-sample designs}
+
+\item{nullInterval}{optional vector of length 2 containing lower and upper bounds of an interval hypothesis to test}
 
 \item{paired}{if TRUE, observations are paired}
 
