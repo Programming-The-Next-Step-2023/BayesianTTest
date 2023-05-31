@@ -170,7 +170,7 @@ server <- function(input, output) {
 
   })
 
-  # Enable and disable test value and variable 2 fields based on test selected ----
+  # Enable and disable test value and variable 2 fields based on test ----
   observeEvent(input$type, {
     if (input$type != 1) {
       shinyjs::disable("test_value")
@@ -206,7 +206,7 @@ server <- function(input, output) {
       NULL
     }
 
-    # Define if paired test and user define scale parameter for the Cauchy prior ----
+    # Assign the selected test and scale parameter for the Cauchy prior ----
     paired <- if(input$type == 2) {TRUE} else {FALSE}
     rscale <- input$user_r
 
