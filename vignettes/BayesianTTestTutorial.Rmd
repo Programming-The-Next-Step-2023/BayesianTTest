@@ -35,10 +35,10 @@ Using the t-test dashboard is really simple, users simply have to upload their d
 
 ## BayesianTTest Functions Tutorial
 
-So far, the BayesianTTest package only contains one function: robustness_check().
+So far, the BayesianTTest package only contains one function: robustness.check().
 
 
-### robustness_check()
+### robustness.check()
 
 This function computes the Bayes Factor for the desired test while modifying the prior scale values and returns a plot. It takes the following arguments:
 
@@ -61,7 +61,7 @@ Here is an example of the function in action:
 ```{r}
 library(BayesianTTest)
 
-robustness_check(x = sleep[1:10, 1],
+robustness.check(x = sleep[1:10, 1],
                  y = sleep[11:20, 1],
                  paired = TRUE)
 ```

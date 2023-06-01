@@ -14,7 +14,7 @@
 #' @param iterations will determine how precise the plot will be
 
 #' @export
-robustness_check <- function (
+robustness.check <- function (
   x,
   y,
   mu = 0,

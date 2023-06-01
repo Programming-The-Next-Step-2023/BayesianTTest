@@ -1,8 +1,15 @@
+#'
+#'
+#' @import BayesFactor
+#' @import shiny
+#' @import shinyjs
+#' @import DT
+
+
 library(shiny)
 library(shinyjs) # Enabling or disabling input fields
 library(DT) # Better data tables
 library(BayesFactor)
-library(BayesianTTest)
 
 ui <- fluidPage(
 
@@ -236,7 +243,7 @@ server <- function(input, output) {
     # BF robustness check ----
     robustness_check_plot <-
     if (input$robustness) {
-      robustness_check(x = unlist(x),
+      robustness.check(x = unlist(x),
                        y = unlist(y),
                        mu = mu,
                        nullInterval = nullInterval,
@@ -294,6 +301,13 @@ names(hypothesis_choices) <- c(paste("\U2260", "test value"),
                                paste("group 1", ">", "group 2"),
                                paste("group 1", "<", "group 2"))
 
+#' This function plots the change in the Bayes Factor under different possible priors
+#'
+#' @title Bayesian t-test calculator App
+#' @author Roy Michael Moore, \email{roy.moore@@student.uva.nl}
+#' @export
 
+ttest.calculator <- function() {
+  shinyApp(ui = ui, server = server)
+}
 
-shinyApp(ui = ui, server = server)
