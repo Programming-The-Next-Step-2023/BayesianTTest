@@ -20,51 +20,126 @@ A tutorial for the R package and Shiny Dashboard BayesianTTest.
 
 ## Contents
 
-1. Shiny Dashboard tutorial with screenshots.
+1. Shiny Dashboard Tutorial.
 
-1. BayesianTTest functions Tutorial.
+1. Other BayesianTTest Functions.
 
 
 ## Shiny Dashboard Tutorial
 
-The shiny dashboard allows the user to perform Bayesian t-tests after they have uploaded a CSV. file of the data. It is not finished yet hence there are no screenshots yet. 
+The shiny dashboard allows the user to perform Bayesian t-tests on data of their choice. Both one-sample and two-sample designs are available, with various other options that can be changed by the user. Below, we will analyze a data set available [here](https://github.com/Programming-The-Next-Step-2023/BayesianTTest/tree/main/data). 
 
-Using the t-test dashboard is really simple, users simply have to upload their data file with one variable in each column. First, they have to select the variable(s) that they want to be part of the design. Then, they will select their desired analyses (e.g., one-sample) and the type of hypothesis (e.g., two tailed). Afterwards, they can specify the prior scale and whether they want a Bayesian robustness check performed.
+### Installation
+
+The library required for using the shiny app can be downloaded and installed directly from Github as follows:
+
+```{r, eval = FALSE}
+devtools::install_github("https://github.com/Programming-The-Next-Step-2023/BayesianTTest")
+
+```
 
 
+After installation, the Bayesian t-test calculator can be initialized the following way:
 
-## BayesianTTest Functions Tutorial
+```{r, eval = FALSE}
+library(BayesianTTest)
 
-So far, the BayesianTTest package only contains one function: robustness.check().
+ttest.calculator()
+```
+
+
+### Uploading the data
+
+The data must be uploaded in a .csv format. It can be uploaded by pressing the Browse button on the top left of the app (see image below). The data must contain each of the variables of interest in a separate column. For two-sampled designs, the data for each of the conditions or measurements should be in an individual column.
+
+Below the Browse button, the user can specify through a checkbox whether the data includes a header row with variable names or not.
+
+```{r, echo = FALSE, out.width = "100%"}
+
+knitr::include_graphics("images/upload_data.png")
+
+```
+
+### Selecting Variables
+
+After the data has been uploaded, it should be visible on the right side of the app, as shown in the image below.
+
+```{r, echo = FALSE, out.width = "100%"}
+
+knitr::include_graphics("images/choose_variables.png")
+
+```
+
+Using the dropdowns on the left-hand sidebar, the variable(s) to be analyzed can be selected based on their names.
+
+### Setting Up the Design
+
+Once the variables are selected, the  design should be selected next. Under Analysis Type, a one-sample, dependent samples or independent samples design can be chosen.
+
+```{r, echo = FALSE, out.width = "100%"}
+
+knitr::include_graphics("images/choose_design.png")
+
+```
+
+Afterwards, the type of hypothesis to be tested can be marked. For a two-tailed test, the first option should be chosen.
+
+Once the design is set up, we can perform the analysis. Before doing so, it is also possible to to modify the default scale parameter of the Cauchy prior. Further, a checkbox for whether or not to perform a Bayes Factor Robustness Check is available. For this analysis, the prior scale parameter will be left at default (i.e, 0.707), and a Bayes Factor Robustness Check will be requested.
+
+### Viewing the Results
+
+The results may be inspected under the "Results" tab on the top center of the app.
+
+```{r, echo = FALSE, out.width = "100%"}
+
+knitr::include_graphics("images/view_results_1.png")
+
+```
+
+First, a box plot of the group differences will be presented, followed by the Bayes Factor of the analysis, the prior scale used, and the 95% credible interval of the posterior. Guidelines for interpreting the evidence the Bayes Factor provides can be found under the "BF interpretation" tab. Afterwards, the prior plot is shown.
+
+```{r, echo = FALSE, out.width = "100%"}
+
+knitr::include_graphics("images/view_results_2.png")
+
+```
+
+Right beneath the prior plot, the posterior distribution is visualized for easy comparison.
+
+Lastly, if a Bayes Factor Robustness Check was selected, this plot will be shown after the posterior plot.
+
+## Other BayesianTTest Functions
+
+Other than the ttest.calculator(), this package only contains one more function: robustness.check(). This function is part of the t-test calculator but is also available separately for users who are analyzing their data in R.
 
 
 ### robustness.check()
 
-This function computes the Bayes Factor for the desired test while modifying the prior scale values and returns a plot. It takes the following arguments:
+This function computes the Bayes Factor for the desired test while modifying the prior scale values, returning a plot and the data used to generate it. It takes the following arguments:
 
-1. "x" a vector of observations for the first (or only) group
+1. "x" a vector of observations for the first (or only) group.
 
-1. "y" a vector of observations for the second group (or condition, for paired)
+1. "y" a vector of observations for the second group (or condition, for paired).
 
-1. "mu" used to specify test value for one-sample designs
+1. "mu" used to specify test value for one-sample designs. Defaults to 0.
 
-1. "nullInterval" optional vector of length 2 containing lower and upper bounds of an interval hypothesis to test
+1. "nullInterval" optional vector of length 2 containing lower and upper bounds of an interval hypothesis to test.
 
-1. "paired" if TRUE, observations are paired
+1. "paired" if TRUE, observations are paired. Defaults to TRUE.
 
-1. "max_r" maximum value of the scale parameter of the Cauchy prior to be plotted
+1. "max_r" maximum value of the scale parameter of the Cauchy prior to be plotted. Defaults to 2.
 
-1. "iterations" will determine how precise the plot will be
+1. "iterations" will determine how precise the plot will be. Defaults to 200.
 
-Here is an example of the function in action:
+Here is an example of the function in action with the base R data set "sleep". This is data capture the change in sleep patients had with respect to baseline under the effect of two different sleep-inducing drugs. You can read more about the data with help(sleep). Since the data are repeated measurements on 10 people, we select the option "paired = TRUE".
 
-```{r}
+```{r, warning = FALSE, out.width = "40%"}
 library(BayesianTTest)
 
-robustness.check(x = sleep[1:10, 1],
-                 y = sleep[11:20, 1],
-                 paired = TRUE)
+result <- robustness.check(x = sleep[1:10, 1],
+                           y = sleep[11:20, 1],
+                           paired = TRUE)
 ```
 
-If you want to store this plot for later your, you can simple use the function recordPlot().
+If you want to store this plot for later, you can simple use the function recordPlot(). The robustness.check() function also returns a data frame with the Bayes Factors at different values of the prior scale parameter.
 

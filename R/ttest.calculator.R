@@ -89,6 +89,9 @@ ui <- fluidPage(
         # Tab 2: Results ----
         tabPanel("Results",
 
+                 # Output: Boxplot ----
+                 plotOutput(outputId = "descriptive_plot"),
+
                  # Output: Bayes Factor  ----
                  textOutput(outputId = "BF_text"),
 
@@ -150,13 +153,18 @@ ui <- fluidPage(
                    filter = "none",
                    width = 425),
 
-                 helpText("The Bayes Factor can also be flipped by dividing
-                          it by 1. If done so, values greater than one
-                          represent evidence in favor of the null hytpothesis.")
-        )
-      )
-    )
-  ))
+                 headerPanel(""), # add white space
+
+                 p("The Bayes Factor can also be flipped by dividing
+                          it by 1. If done so, values greater than one represent
+                           evidence in favor of the null hytpothesis."),
+
+                 p("This table is adapted from ",
+                   a(href = "https://doi.org/10.1017/CBO9781139087759",
+                     "Lee & Wagenmakers (2013).",
+                     target = "_blank"))
+
+        )))))
 
 
 server <- function(input, output) {
@@ -278,53 +286,106 @@ server <- function(input, output) {
     samples <- posterior(model = result[1],
                          iterations = 5000)
 
+    # Save Boxplot ----
+    if (input$type == 1) {
+      boxplot(x = unlist(x),
+              names = c(input$variable_1),
+              ylab = "Measure",
+              main = "Group Differences")
+      descriptive_plot <- recordPlot()
+    }
+
+    else {
+      boxplot(x = list(unlist(x),
+                       unlist(y)),
+              names = c(input$variable_1,
+                        input$variable_2),
+              ylab = "Measure",
+              main = "Group Differences")
+      descriptive_plot <- recordPlot()
+    }
+
+
     # Extract Bayes factor and save it into an object ----
-    BF <-
-      paste0(
-        "Bayes Factor in favor of the alternative is ",
-        round(extractBF(result)[[1]][1], 3),
-        ", with prior a Cauchy prior scale of ",
-        rscale,
-        ". ",
-        "The 95% credible interval of the posterior is [",
-        round(quantile(samples[, "delta"], probs = 0.025), 3),
-        ", ",
-        round(quantile(samples[, "delta"], probs = 0.975), 3),
-        "]."
-      )
+    ## Posterior computation is not feasible
+    BF <- if (sum(is.na(samples[,"delta"])) == 5000) {
+      paste0("Bayes Factor in favor of the alternative is ",
+             round(extractBF(result)[[1]][1], 4),
+             ", with prior a Cauchy prior scale of ",
+             rscale,
+             ". ")
+    }
+    ## Posterior computation goes okay
+    else {
+      paste0("Bayes Factor in favor of the alternative is ",
+             round(extractBF(result)[[1]][1], 4),
+             ", with prior a Cauchy prior scale of ",
+             rscale,
+             ". ",
+             "The 95% credible interval of the posterior is [",
+             round(quantile(samples[, "delta"], probs = 0.025), 3),
+             ", ",
+             round(quantile(samples[, "delta"], probs = 0.975), 3),
+             "].")
+    }
+
 
     # Save posterior plot ----
-    plot(samples[, "delta"],
-         trace = FALSE,
-         main = "Posterior Plot",
-         bty = "n",
-         show.obs = FALSE,
-         xlab = "Effect Size",
-         ylab = "Probability Density")
-    posterior_plot <- recordPlot()
+    ## Posterior computation is not feasible
+    if (sum(is.na(samples[,"delta"])) == 5000) {
+      plot(1,
+           main = "Posterior Plot",
+           bty = "n",
+           type = "n",
+           xlab = "Effect Size",
+           ylab = "Probability Density")
+      text(x = 1,
+           "The selected hypothesis could not be computed after 5000 iterations
+           of the MCMC algorithm. Please, select a more appropiate hypothesis
+           based on the descriptives")
+      posterior_plot <- recordPlot()
+    }
+    ## Posterior computation goes okay
+    else {
+      plot(samples[, "delta"],
+           trace = FALSE,
+           main = "Posterior Plot",
+           bty = "n",
+           show.obs = FALSE,
+           xlab = "Effect Size",
+           ylab = "Probability Density")
+      posterior_plot <- recordPlot()
+    }
 
 
     # BF robustness check ----
-    robustness_check_plot <-
     if (input$robustness) {
       robustness.check(x = unlist(x),
                        y = unlist(y),
                        mu = mu,
                        nullInterval = nullInterval,
                        paired = paired)
-      recordPlot()
+      robustness_check_plot <- recordPlot()
     } else {
-      NULL
+      robustness_check_plot <- NULL
     }
 
 
     # Save all objects in the model() reactive ----
-    list(BF = BF,
+    list(descriptive_plot = descriptive_plot,
+         BF = BF,
          posterior_plot = posterior_plot,
          robustness_check_plot = robustness_check_plot)
 
 
   })
+  # Render Boxplot ----
+  output$descriptive_plot <- renderPlot({
+
+    model()$descriptive_plot
+
+  })
+
 
   # Render Bayes factor and prior scale text ----
   output$BF_text <- renderText({
@@ -345,7 +406,7 @@ server <- function(input, output) {
   output$prior_plot <- renderPlot({
 
     # Plot prior based on type of hypothesis selected ----
-    # Two-tailed test
+    ## Two-tailed test
     prior_plot <- if(input$hypothesis == 1) {
       x <- seq(-3, 3, by = 0.05)
       plot(x = x,
@@ -356,7 +417,7 @@ server <- function(input, output) {
            xlab = "Effect Size",
            ylab = "Probability Density")
     }
-    # Right-tailed test
+    ## Right-tailed test
     else if (input$hypothesis == 2) {
       x <- seq(0, 3, by = 0.05)
       plot(x = x,
@@ -367,7 +428,7 @@ server <- function(input, output) {
            xlab = "Effect Size",
            ylab = "Probability Density")
     }
-    # Left-tailed test
+    ## Left-tailed test
     else {
       x <- seq(-3, 0, by = 0.05)
       plot(x = x,
@@ -394,7 +455,8 @@ server <- function(input, output) {
 
 
 # Export App ----
-#' This function runs the Bayesian t-test calculator
+#' This function runs the Bayesian t-test calculator. For more information, see
+#' the BayesianTTestTutorial vignette.
 #'
 #' @title Bayesian t-test calculator App
 #' @author Roy Michael Moore, \email{roy.moore@@student.uva.nl}

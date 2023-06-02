@@ -2,7 +2,7 @@ library(BayesFactor)
 library(BayesianTTest)
 
 test_that("robustness check works", {
-  res <- robustness_check(x = sleep$extra[sleep$group == 1],
+  res <- robustness.check(x = sleep$extra[sleep$group == 1],
                    y = sleep$extra[sleep$group == 2],
                    paired = TRUE)
 

@@ -7,6 +7,7 @@
 
 # RStudio files
 .Rproj.user/
+*.Rproj
 
 # knitr and R markdown default cache directories
 *_cache/
@@ -15,4 +16,11 @@
 # Temporary files created by R markdown
 *.utf8.md
 *.knit.md
+
+# Ignore testthat Rplots.pdf file
+tests/testthat/Rplots.pdf
+
+# Built Vignettes
+/doc/
+/Meta/
 

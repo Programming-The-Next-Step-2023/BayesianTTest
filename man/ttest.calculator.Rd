@@ -7,7 +7,8 @@
 ttest.calculator()
 }
 \description{
-This function plots the change in the Bayes Factor under different possible priors
+This function runs the Bayesian t-test calculator. For more information, see
+the BayesianTTestTutorial vignette.
 }
 \author{
 Roy Michael Moore, \email{roy.moore@student.uva.nl}
