@@ -1,4 +1,5 @@
-#' This function plots the change in the Bayes Factor under different possible priors
+#' This function plots the change in the Bayes Factor under different possible
+#' priors. For an example, see the BayesianTTestTutorial vignette.
 #'
 #' @title Bayes Factor Robustness Check
 #' @author Roy Michael Moore, \email{roy.moore@@student.uva.nl}
@@ -14,7 +15,7 @@
 #' @param iterations will determine how precise the plot will be
 
 #' @export
-robustness_check <- function (
+robustness.check <- function (
   x,
   y,
   mu = 0,
@@ -54,8 +55,11 @@ robustness_check <- function (
     y = res[, 2],
     type = "l",
     log = "y",
+    bty = "n",
     main = "Bayes Factor Robustness Check",
     xlab = "Prior Scale",
-    ylab = "BF")
+    ylab = "Bayes Factor")
+
+  return(res)
 
 }
