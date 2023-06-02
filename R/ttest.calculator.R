@@ -1,15 +1,8 @@
-#'
-#'
 #' @import BayesFactor
 #' @import shiny
 #' @import shinyjs
 #' @import DT
 
-
-library(shiny)
-library(shinyjs) # Enabling or disabling input fields
-library(DT) # Better data tables
-library(BayesFactor)
 
 ui <- fluidPage(
 
@@ -89,7 +82,7 @@ ui <- fluidPage(
         # Tab 1: Data Frame Visualization ----
         tabPanel("Data",
 
-                 DT::dataTableOutput("data_table"),
+                 DT::dataTableOutput("data_table")
 
         ),
 
@@ -99,17 +92,72 @@ ui <- fluidPage(
                  # Output: Bayes Factor  ----
                  textOutput(outputId = "BF_text"),
 
+                 # Output: Prior Plot ----
+                 plotOutput(outputId = "prior_plot"),
+
                  # Output: Posterior Plot ----
                  plotOutput(outputId = "posterior_plot"),
 
                  # Output: BF Robustness Check Plot ----
                  plotOutput(outputId = "robustness_check_plot")
 
+        ),
+
+        # Tab 3: Bayes Factor Interpretation ----
+        tabPanel("BF Interpretation",
+
+                 datatable(
+                   data.frame(matrix(
+                     data = c(" > 100",
+                              "30 - 100",
+                              "10 - 30",
+                              "3 - 10",
+                              "1 - 3",
+                              "1",
+                              "1/3 - 1",
+                              "1/10 - 1/3",
+                              "1/30 - 1/10",
+                              "1/100 - 1/30",
+                              " < 1/100",
+                              "Extreme evidence for the alternative",
+                              "Very strong evidence for the alternative",
+                              "Strong evidence for the alternative",
+                              "Moderate evidence for the alternative",
+                              "Anecdotal evidence for the alternative",
+                              "No evidence",
+                              "Anecdotal evidence for the null",
+                              "Moderate evidence for the null",
+                              "Strong evidence for the null",
+                              "Very strong evidence for the null",
+                              "Extreme evidence for the null"),
+
+                     ncol = 2,
+                     nrow = 11,
+                     dimnames = list(NULL, c("Bayes Factor", "Interpretation"))
+                   )),
+                   options = list(
+                     dom = "t",
+                     ordering = FALSE,
+                     paging = FALSE,
+                     searching = FALSE),
+                   selection = 'none',
+                   callback = JS(
+                     "$('table.dataTable.no-footer').css('border-bottom',
+                     'none');"),
+                   class = 'row-border',
+                   escape = FALSE,
+                   rownames = FALSE,
+                   filter = "none",
+                   width = 425),
+
+                 helpText("The Bayes Factor can also be flipped by dividing
+                          it by 1. If done so, values greater than one
+                          represent evidence in favor of the null hytpothesis.")
         )
       )
     )
-  )
-)
+  ))
+
 
 server <- function(input, output) {
 
@@ -225,18 +273,34 @@ server <- function(input, output) {
                       paired = paired,
                       rscale = rscale)
 
-    # Extract Bayes factor and save it into an object ----
-    BF <- paste0("Bayes Factor is ", round(extractBF(result)[[1]][1], 3),
-           " with prior a Cauchy prior scale of ", rscale, ".")
 
     # Sample from the posterior ----
     samples <- posterior(model = result[1],
                          iterations = 5000)
 
+    # Extract Bayes factor and save it into an object ----
+    BF <-
+      paste0(
+        "Bayes Factor in favor of the alternative is ",
+        round(extractBF(result)[[1]][1], 3),
+        ", with prior a Cauchy prior scale of ",
+        rscale,
+        ". ",
+        "The 95% credible interval of the posterior is [",
+        round(quantile(samples[, "delta"], probs = 0.025), 3),
+        ", ",
+        round(quantile(samples[, "delta"], probs = 0.975), 3),
+        "]."
+      )
+
     # Save posterior plot ----
     plot(samples[, "delta"],
          trace = FALSE,
-         main = "")
+         main = "Posterior Plot",
+         bty = "n",
+         show.obs = FALSE,
+         xlab = "Effect Size",
+         ylab = "Probability Density")
     posterior_plot <- recordPlot()
 
 
@@ -269,10 +333,53 @@ server <- function(input, output) {
 
   })
 
+
   # Render posterior plot ----
   output$posterior_plot <- renderPlot({
 
     model()$posterior_plot
+
+  })
+
+  # Render prior plot ----
+  output$prior_plot <- renderPlot({
+
+    # Plot prior based on type of hypothesis selected ----
+    # Two-tailed test
+    prior_plot <- if(input$hypothesis == 1) {
+      x <- seq(-3, 3, by = 0.05)
+      plot(x = x,
+           y = dcauchy(x, scale = input$user_r),
+           type = "l",
+           main = "Prior Plot",
+           bty = "n",
+           xlab = "Effect Size",
+           ylab = "Probability Density")
+    }
+    # Right-tailed test
+    else if (input$hypothesis == 2) {
+      x <- seq(0, 3, by = 0.05)
+      plot(x = x,
+           y = dcauchy(x, scale = input$user_r) * 2,
+           type = "l",
+           main = "Prior Plot",
+           bty = "n",
+           xlab = "Effect Size",
+           ylab = "Probability Density")
+    }
+    # Left-tailed test
+    else {
+      x <- seq(-3, 0, by = 0.05)
+      plot(x = x,
+           y = dcauchy(x, scale = input$user_r) * 2,
+           type = "l",
+           main = "Prior Plot",
+           bty = "n",
+           xlab = "Effect Size",
+           ylab = "Probability Density")
+    }
+
+    prior_plot
 
   })
 
@@ -285,29 +392,20 @@ server <- function(input, output) {
 
 }
 
-# Utils
 
-hypothesis_choices <- list("1" = 1, "2" = 2, "3" = 3,
-                           "4" = 1, "5" = 2, "6" = 3,
-                           "7" = 1, "8" = 2, "9" = 3)
-
-names(hypothesis_choices) <- c(paste("\U2260", "test value"),
-                               "> test value",
-                               "< test value",
-                               paste("measure 1", "\U2260", "measure 2"),
-                               paste("measure 1", ">", "measure 2"),
-                               paste("measure 1", "<", "measure 2"),
-                               paste("group 1", "\U2260", "group 2"),
-                               paste("group 1", ">", "group 2"),
-                               paste("group 1", "<", "group 2"))
-
-#' This function plots the change in the Bayes Factor under different possible priors
+# Export App ----
+#' This function runs the Bayesian t-test calculator
 #'
 #' @title Bayesian t-test calculator App
 #' @author Roy Michael Moore, \email{roy.moore@@student.uva.nl}
 #' @export
 
+# Wrap the app as a function the user can call
 ttest.calculator <- function() {
+
+  shinyjs::useShinyjs() # Set up shinyjs
+
   shinyApp(ui = ui, server = server)
+
 }
 
